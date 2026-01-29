@@ -90,7 +90,7 @@ class HomeScreen extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 1.6,
+        childAspectRatio: 1.4,
         mainAxisSpacing: 15,
         crossAxisSpacing: 15,
       ),
