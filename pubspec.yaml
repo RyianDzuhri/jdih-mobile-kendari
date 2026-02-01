@@ -8,29 +8,13 @@ environment:
   sdk: ^3.10.7
 
 dependencies:
-  path_provider: ^2.1.2  # Untuk cari folder temp di HP
-  
-  open_filex: ^4.3.2     # Untuk buka file PDF yang sudah didownload
-
   flutter:
     sdk: flutter
-
-  # Icon bawaan iOS
-  cupertino_icons: ^1.0.8
-
-  # --- TAMBAHAN KITA ---
-  
-  # Untuk koneksi ke API Laravel
+  cupertino_icons: ^1.0.6
   http: ^1.2.0
-  
-  # Untuk font yang bagus (Lato/Roboto)
-  google_fonts: ^6.1.0
-  
-  # Untuk format tanggal (contoh: 28 Januari 2026)
-  intl: ^0.19.0
-  
-  # Untuk membuka link PDF di browser/aplikasi luar
+  flutter_cached_pdfview: ^0.4.3
   url_launcher: ^6.2.4
+  google_fonts: ^6.1.0
 
 dev_dependencies:
   flutter_test:
