@@ -11,40 +11,26 @@ class JdihService {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', 
-    'X-API-Key': 'jdih_mobile_key_rahasia', 
+    'X-API-Key': 'jdih_mobile_key_rahasia', // Pastikan key ini sesuai dengan backend
   };
 
-  // 1. Ambil Tipe Dokumen (PERBAIKAN LOGIKA PARSING)
+  // 1. Ambil Tipe Dokumen
   Future<List<TipeDokumen>> getTipeDokumen() async {
     try {
-      print("Mengambil Tipe Dokumen...");
-      final response = await http.get(
-        Uri.parse(ApiConfig.documentTypes),
-        headers: _headers,
-      );
+      final response = await http.get(Uri.parse(ApiConfig.documentTypes), headers: _headers);
       
-      print("Status Tipe Dokumen: ${response.statusCode}");
-
       if (response.statusCode == 200) {
-        // Decode sebagai dynamic dulu karena kita belum tahu bentuknya List atau Map
         final dynamic jsonResponse = json.decode(response.body);
-        
         List<dynamic> data = [];
 
-        // CEK 1: Apakah responsenya langsung List? [{}, {}]
         if (jsonResponse is List) {
            data = jsonResponse;
-        } 
-        // CEK 2: Apakah responsenya Map dengan key 'data'? { "data": [] }
-        else if (jsonResponse is Map && jsonResponse.containsKey('data')) {
+        } else if (jsonResponse is Map && jsonResponse.containsKey('data')) {
            data = jsonResponse['data'] ?? [];
         }
-
-        print("Berhasil dapat ${data.length} kategori."); // Debugging
         
         return data.map((e) => TipeDokumen.fromJson(e)).toList();
       } else {
-        print("Gagal ambil tipe dokumen. Code: ${response.statusCode}");
         return [];
       }
     } catch (e) {
@@ -53,43 +39,51 @@ class JdihService {
     }
   }
 
-  // 2. Ambil Semua Produk Hukum (Tetap Sama)
+  // 2. Ambil Semua Produk Hukum (List Awal)
   Future<List<ProdukHukum>> getAllProdukHukum() async {
     try {
-      print("Mengambil Semua Produk Hukum...");
-      final response = await http.get(
-        Uri.parse(ApiConfig.allDocuments),
-        headers: _headers,
-      );
-
-      print("Status Produk Hukum: ${response.statusCode}");
+      final response = await http.get(Uri.parse(ApiConfig.allDocuments), headers: _headers);
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
         final List<dynamic> data = jsonResponse['data'] ?? [];
         
-        return data.map((e) {
-            try {
-              return ProdukHukum.fromJson(e);
-            } catch (_) {
-              return ProdukHukum(
-                id: 0, 
-                judul: "Format Salah", 
-                tahunTerbit: "-", 
-                jenis: "-", 
-                status: "-", 
-                downloadUrl: "", 
-                hasFile: false,
-                nomorPeraturan: "-",
-                bidangHukum: "-"
-              );
-            }
-        }).where((e) => e.id != 0).toList();
+        // Filter id 0 untuk menghindari data error
+        return data.map((e) => ProdukHukum.fromJson(e)).where((e) => e.id != 0).toList();
       } else {
         throw Exception("Gagal Akses Data: ${response.statusCode}");
       }
     } catch (e) {
       print("Error koneksi produk hukum: $e");
+      rethrow;
+    }
+  }
+
+  // 3. AMBIL DETAIL PRODUK HUKUM (FORMAT JDIHN BARU)
+  Future<ProdukHukum> getDetailProdukHukum(int id) async {
+    try {
+      // URL Khusus Format JDIHN
+      // http://jdih.kendarikota.go.id/api/jdih/jdihn-format/documents/795
+      final String url = 'http://jdih.kendarikota.go.id/api/jdih/jdihn-format/documents/$id';
+      
+      print("Mengambil Detail ID: $id dari $url");
+
+      final response = await http.get(
+        Uri.parse(url),
+        // headers: _headers, // Uncomment jika API Detail juga butuh header
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        
+        // Langsung parse karena response JSON-nya langsung object (bukan list/data wrapper)
+        // Sesuai contoh: { "idData": "795", ... }
+        return ProdukHukum.fromJson(jsonResponse);
+      } else {
+        throw Exception('Gagal memuat detail: ${response.statusCode}');
+      }
+    } catch (e) {
+      print("Error detail jdihn: $e");
       rethrow;
     }
   }
