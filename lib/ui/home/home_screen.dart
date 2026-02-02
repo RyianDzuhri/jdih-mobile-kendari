@@ -8,15 +8,12 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     
-    // --- UPDATE DATA: MENAMBAHKAN IKON & WARNA ---
-    // Kita ganti 'code' dengan 'icon' dan tambahkan 'color' aksen
+    // --- DATA ITEM ---
 
     // 1. ITEM ATAS (PUU)
     final Map<String, dynamic> infoTop = {
       "label": "Pembentukan PUU",
-      // Menggunakan ikon timbangan/hukum
       "icon": Icons.balance_rounded, 
-      // Warna aksen Indigo
       "color": const Color(0xFF3949AB), 
     };
 
@@ -24,63 +21,67 @@ class HomeScreen extends StatelessWidget {
     final List<Map<String, dynamic>> infoBottom = [
       {
         "label": "Propemperda",
-        "icon": Icons.menu_book_rounded, // Ikon buku
-        "color": const Color(0xFF00897B), // Teal/Hijau tua
+        "icon": Icons.menu_book_rounded, 
+        "color": const Color(0xFF00897B), 
       },
       {
         "label": "Propemperkada",
-        "icon": Icons.assignment_turned_in_rounded, // Ikon tugas/mandat
-        "color": const Color(0xFFFB8C00), // Oranye
+        "icon": Icons.assignment_turned_in_rounded, 
+        "color": const Color(0xFFFB8C00), 
       },
       {
         "label": "Ranperda",
-        "icon": Icons.history_edu_rounded, // Ikon rancangan/draft
-        "color": const Color(0xFF5E35B1), // Ungu
+        "icon": Icons.history_edu_rounded, 
+        "color": const Color(0xFF5E35B1), 
       },
       {
         "label": "Ranperwali",
-        "icon": Icons.edit_document, // Ikon edit dokumen
-        "color": const Color(0xFFE53935), // Merah
+        "icon": Icons.edit_document, 
+        "color": const Color(0xFFE53935), 
       },
     ];
 
-    // DATA BERITA (Tetap sama)
+    // DATA BERITA
     final List<Map<String, String>> beritaList = [
       {"judul": "Kota Kendari Raih Penghargaan JDIH Terbaik Tingkat Nasional", "tanggal": "27 Jan 2026", "kategori": "Prestasi"},
       {"judul": "DPRD Sahkan 3 Rancangan Peraturan Daerah Menjadi Perda", "tanggal": "25 Jan 2026", "kategori": "Legislasi"},
     ];
 
     return Scaffold(
-      // Menggunakan background yang sedikit lebih cerah
       backgroundColor: const Color(0xFFF8F9FA), 
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // HEADER (Visual Baru)
+            // HEADER 
             _buildHeaderSearch(context),
             
             const SizedBox(height: 30),
 
-            // TOMBOL UTAMA
+            // TOMBOL UTAMA (PRODUK HUKUM)
             _buildSectionTitle("Menu Utama"),
-            const SizedBox(height: 15),
+            const SizedBox(height: 10), // Jarak dirapatkan sedikit
             _buildMainButton(context),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 25),
 
-            // INFORMASI HUKUM (Visual Baru dengan Ikon)
+            // INFORMASI HUKUM
             _buildSectionTitle("Informasi Hukum"),
-            const SizedBox(height: 15),
+            
+            // Jarak antara Judul dan Card PUU dirapatkan (dari 15 ke 10)
+            const SizedBox(height: 10), 
             
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 children: [
-                  // A. Item Atas Visual Baru
+                  // A. Item Atas (PUU)
                   _buildSingleTopItemVisual(context, infoTop),
-                  const SizedBox(height: 15),
-                  // B. Grid Bawah Visual Baru
+                  
+                  // Jarak antara PUU dan Grid bawah dirapatkan (dari 15 ke 8)
+                  const SizedBox(height: 8),
+                  
+                  // B. Grid Bawah (Propemperda, dll)
                   _buildBottomGridItemsVisual(context, infoBottom),
                 ],
               ),
@@ -105,11 +106,10 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // --- WIDGET BARU: HEADER DENGAN ORNAMEN ---
+  // --- WIDGET HEADER ---
   Widget _buildHeaderSearch(BuildContext context) {
     return Stack(
       children: [
-        // Background Biru dengan Hiasan Lingkaran Transparan
         Container(
           height: 220,
           decoration: const BoxDecoration(
@@ -118,7 +118,6 @@ class HomeScreen extends StatelessWidget {
           ),
           child: Stack(
             children: [
-              // Ornamen Lingkaran 1
               Positioned(
                 top: -50, right: -50,
                 child: Container(
@@ -126,7 +125,6 @@ class HomeScreen extends StatelessWidget {
                   decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), shape: BoxShape.circle),
                 ),
               ),
-               // Ornamen Lingkaran 2
               Positioned(
                 bottom: 20, left: -30,
                 child: Container(
@@ -134,7 +132,6 @@ class HomeScreen extends StatelessWidget {
                   decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), shape: BoxShape.circle),
                 ),
               ),
-               // Konten Teks Header
               Padding(
                  padding: const EdgeInsets.fromLTRB(25, 70, 25, 20),
                  child: Column(
@@ -151,7 +148,6 @@ class HomeScreen extends StatelessWidget {
                             Text("Selamat datang di portal hukum daerah", style: GoogleFonts.lato(color: Colors.white.withOpacity(0.8), fontSize: 13)),
                           ],
                         ),
-                        // Tombol Notifikasi
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(15)),
@@ -165,7 +161,6 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
         ),
-        // Search Bar (Posisi menumpuk)
         Container(
           margin: const EdgeInsets.only(top: 185, left: 25, right: 25),
           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -192,9 +187,7 @@ class HomeScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  border: Border(
-                    left: BorderSide(color: Colors.grey.shade200),
-                  ),
+                  border: Border(left: BorderSide(color: Colors.grey.shade200)),
                 ),
                 child: const Icon(Icons.tune_rounded, color: Color(0xFF1a237e)),
               ),
@@ -205,13 +198,12 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // --- WIDGET BARU: JUDUL SEKSI DENGAN AKSEN ---
+  // --- WIDGET JUDUL ---
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 25),
       child: Row(
         children: [
-          // Garis vertikal kecil warna biru sebagai aksen
           Container(
             height: 20, width: 4,
             decoration: BoxDecoration(color: const Color(0xFF1a237e), borderRadius: BorderRadius.circular(2)),
@@ -223,7 +215,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // --- WIDGET BARU: ITEM ATAS VISUAL ---
+  // --- WIDGET ITEM ATAS VISUAL (NAVIGASI DITAMBAHKAN) ---
   Widget _buildSingleTopItemVisual(BuildContext context, Map<String, dynamic> item) {
     final Color accentColor = item['color'];
     return Container(
@@ -236,19 +228,26 @@ class HomeScreen extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
-          onTap: () {},
+          // Tambahkan Navigasi
+          onTap: () {
+             Navigator.push(context, MaterialPageRoute(
+               builder: (context) => DocumentListScreen(
+                 categoryFilter: "PUU", // Filter khusus PUU
+                 pageTitle: item['label']
+               )
+             ));
+          },
           child: Padding(
             padding: const EdgeInsets.all(20.0),
             child: Row(
               children: [
-                // Container Ikon dengan Background Warna Aksen Transparan
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: accentColor.withOpacity(0.1), // Background transparan sesuai warna
+                    color: accentColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(15),
                   ),
-                  child: Icon(item['icon'], color: accentColor, size: 28), // Ikon berwarna
+                  child: Icon(item['icon'], color: accentColor, size: 28),
                 ),
                 const SizedBox(width: 20),
                 Expanded(
@@ -276,7 +275,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-   // --- WIDGET BARU: GRID BAWAH VISUAL ---
+   // --- WIDGET GRID BAWAH VISUAL (NAVIGASI DITAMBAHKAN) ---
   Widget _buildBottomGridItemsVisual(
       BuildContext context, List<Map<String, dynamic>> data) {
     return GridView.builder(
@@ -286,7 +285,7 @@ class HomeScreen extends StatelessWidget {
         crossAxisCount: 2,
         crossAxisSpacing: 15,
         mainAxisSpacing: 15,
-        childAspectRatio: 1.6, // sedikit lebih lebar biar teks lega
+        childAspectRatio: 1.6, 
       ),
       itemCount: data.length,
       itemBuilder: (context, index) {
@@ -309,39 +308,36 @@ class HomeScreen extends StatelessWidget {
             color: Colors.transparent,
             child: InkWell(
               borderRadius: BorderRadius.circular(20),
-              onTap: () {},
+              // Tambahkan Navigasi
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(
+                  builder: (context) => DocumentListScreen(
+                    categoryFilter: item['label'], // Kirim label sebagai filter
+                    pageTitle: item['label']
+                  )
+                ));
+              },
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 14,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    /// ICON BOX
                     Container(
                       padding: const EdgeInsets.all(9),
                       decoration: BoxDecoration(
                         color: accentColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Icon(
-                        item['icon'],
-                        color: accentColor,
-                        size: 20, // 🔥 lebih balance
-                      ),
+                      child: Icon(item['icon'], color: accentColor, size: 20),
                     ),
-
                     const SizedBox(width: 10),
-
-                    /// TEXT
                     Expanded(
                       child: Text(
                         item['label'],
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.lato(
-                          fontSize: 12, // 🔥 lebih kecil biar gak turun
+                          fontSize: 12, 
                           fontWeight: FontWeight.bold,
                           color: Colors.black87,
                           height: 1.2,
@@ -357,14 +353,13 @@ class HomeScreen extends StatelessWidget {
       },
     );
   }
-  // ==================== WIDGET PENDUKUNG LAINNYA (Visual Ditingkatkan Sedikit) ====================
 
+  // --- TOMBOL UTAMA ---
   Widget _buildMainButton(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 25),
-      height: 110, // Sedikit lebih besar
+      height: 110, 
       decoration: BoxDecoration(
-        // Gradasi yang lebih kaya
         gradient: const LinearGradient(
           colors: [Color(0xFF1565C0), Color(0xFF42A5F5)], 
           begin: Alignment.topLeft, end: Alignment.bottomRight,
@@ -449,7 +444,6 @@ class HomeScreen extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 25),
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        // Gradasi Pink/Ungu yang lebih modern
         gradient: const LinearGradient(colors: [Color(0xFFAD1457), Color(0xFFEC407A)]),
         borderRadius: BorderRadius.circular(25),
         boxShadow: [BoxShadow(color: const Color(0xFFAD1457).withOpacity(0.4), blurRadius: 15, offset: const Offset(0, 8))],
