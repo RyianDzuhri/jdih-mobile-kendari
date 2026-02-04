@@ -16,8 +16,8 @@ class ProdukHukum {
   final String? sumber;
   final String? subjek;
   final String? bahasa;
-  final String? teuBadan; // Tajuk Entri Utama Badan
-  final String? lokasi;   // Lokasi Fisik Buku/Arsip
+  final String? teuBadan; 
+  final String? lokasi;   
   final String? abstrak;
 
   ProdukHukum({
@@ -30,7 +30,6 @@ class ProdukHukum {
     required this.bidangHukum,
     required this.downloadUrl,
     required this.hasFile,
-    // Constructor Tambahan
     this.tanggalPengundangan,
     this.tempatTerbit,
     this.penerbit,
@@ -43,34 +42,33 @@ class ProdukHukum {
   });
 
   factory ProdukHukum.fromJson(Map<String, dynamic> json) {
-    return ProdukHukum(
-      // LOGIKA ID: Cek 'idData' (Format Baru) dulu, kalau tidak ada cek 'id' (Format Lama)
-      id: int.tryParse(json['idData']?.toString() ?? json['id']?.toString() ?? '0') ?? 0,
+    
+    // --- LOGIKA PERBAIKAN URL ---
+    String rawUrl = json['urlDownload']?.toString() ?? json['download_url']?.toString() ?? '';
+    
+    // Cek apakah URL berisi '/storage/' TAPI TIDAK berisi '/storage/dokumen/'
+    if (rawUrl.isNotEmpty && rawUrl.contains('/storage/') && !rawUrl.contains('/storage/dokumen/')) {
+      // Sisipkan '/dokumen' setelah '/storage'
+      rawUrl = rawUrl.replaceFirst('/storage/', '/storage/dokumen/');
+    }
+    // ----------------------------
 
+    return ProdukHukum(
+      id: int.tryParse(json['idData']?.toString() ?? json['id']?.toString() ?? '0') ?? 0,
       judul: json['judul']?.toString() ?? 'Tanpa Judul',
-      
-      // Mapping Nomor Peraturan (Format Baru: noPeraturan)
       nomorPeraturan: json['noPeraturan']?.toString() ?? json['nomor_peraturan']?.toString() ?? '-',
-      
-      // Mapping Tahun (Format Baru: tahun_pengundangan)
       tahunTerbit: json['tahun_pengundangan']?.toString() ?? json['tahun_terbit']?.toString() ?? '-',
-      
-      // Mapping Jenis (Format Baru: jenis)
       jenis: json['jenis']?.toString() ?? json['jenis_peraturan']?.toString() ?? 'Umum',
-      
       status: json['status']?.toString() ?? 'Berlaku',
-      
-      // Bidang Hukum
       bidangHukum: json['bidangHukum']?.toString() ?? json['bidang_hukum']?.toString() ?? '-',
 
-      // LOGIKA URL: Cek 'urlDownload' (Format Baru) dulu
-      downloadUrl: json['urlDownload']?.toString() ?? json['download_url']?.toString() ?? '',
+      // GUNAKAN URL YANG SUDAH DIPERBAIKI
+      downloadUrl: rawUrl,
 
-      // LOGIKA FILE: Cek keberadaan URL
-      hasFile: (json['urlDownload'] != null && json['urlDownload'] != "") || 
-               (json['has_file'] == true || json['has_file'] == 1),
+      // Cek File
+      hasFile: (rawUrl.isNotEmpty) || (json['has_file'] == true || json['has_file'] == 1),
 
-      // --- MAPPING DETAIL JDIHN ---
+      // Mapping Detail
       tanggalPengundangan: json['tanggal_pengundangan']?.toString(),
       tempatTerbit: json['tempatTerbit']?.toString() ?? json['tempat_penetapan']?.toString(),
       penerbit: json['penerbit']?.toString(),

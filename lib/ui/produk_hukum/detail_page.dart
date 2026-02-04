@@ -3,10 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_cached_pdfview/flutter_cached_pdfview.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/produk_hukum_model.dart';
-import '../../services/jdih_service.dart'; // Pastikan import service ini ada
+import '../../services/jdih_service.dart';
 
 class DetailPage extends StatefulWidget {
-  final ProdukHukum produk; // Data awal dari List Page
+  final ProdukHukum produk;
 
   const DetailPage({super.key, required this.produk});
 
@@ -21,19 +21,28 @@ class _DetailPageState extends State<DetailPage> {
   @override
   void initState() {
     super.initState();
-    // Panggil API detail JDIHN saat halaman dibuka
+    // Panggil API detail saat init
     _detailFuture = _jdihService.getDetailProdukHukum(widget.produk.id);
   }
 
-  // Fungsi helper untuk membuka link download
   Future<void> _launchDownload(String? url) async {
-    if (url == null || url.isEmpty) return;
+    if (url == null || url.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('URL File kosong/tidak valid')),
+      );
+      return;
+    }
     
+    // Debugging: Cek URL di console
+    print("Mencoba download dari: $url");
+
     final Uri uri = Uri.parse(url);
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gagal membuka link download')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gagal membuka link di browser')),
+        );
+      }
     }
   }
 
@@ -42,10 +51,7 @@ class _DetailPageState extends State<DetailPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: Text(
-          "Detail Dokumen", 
-          style: GoogleFonts.poppins(color: const Color(0xFF1a237e), fontWeight: FontWeight.bold, fontSize: 16)
-        ),
+        title: Text("Detail Dokumen", style: GoogleFonts.poppins(color: const Color(0xFF1a237e), fontWeight: FontWeight.bold, fontSize: 16)),
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
@@ -54,18 +60,15 @@ class _DetailPageState extends State<DetailPage> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      // Menggunakan FutureBuilder untuk menangani Loading data detail
       body: FutureBuilder<ProdukHukum>(
         future: _detailFuture,
         builder: (context, snapshot) {
-          // 1. TAMPILAN LOADING
+          // Loading
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // 2. TENTUKAN DATA YANG DIPAKAI
-          // Jika sukses ambil detail, pakai data API (snapshot.data).
-          // Jika gagal, pakai data awal dari list (widget.produk) sebagai fallback.
+          // Gunakan data API jika sukses, atau data fallback jika gagal
           final dataTampil = snapshot.hasData ? snapshot.data! : widget.produk;
           final isError = snapshot.hasError;
 
@@ -84,7 +87,6 @@ class _DetailPageState extends State<DetailPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Pesan Error jika gagal load detail
           if (isError)
             Container(
               margin: const EdgeInsets.only(bottom: 20),
@@ -104,7 +106,7 @@ class _DetailPageState extends State<DetailPage> {
               ),
             ),
 
-          // 1. HEADER KARTU (JUDUL & JENIS)
+          // 1. HEADER
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -116,20 +118,15 @@ class _DetailPageState extends State<DetailPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Badge Jenis
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE8EAF6),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                  decoration: BoxDecoration(color: const Color(0xFFE8EAF6), borderRadius: BorderRadius.circular(8)),
                   child: Text(
                     produk.jenis.toUpperCase(),
                     style: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFF1a237e)),
                   ),
                 ),
                 const SizedBox(height: 15),
-                // Judul Besar
                 Text(
                   produk.judul,
                   style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, height: 1.5, color: Colors.black87),
@@ -137,16 +134,11 @@ class _DetailPageState extends State<DetailPage> {
                 const SizedBox(height: 20),
                 const Divider(),
                 const SizedBox(height: 10),
-                
-                // Info Status
                 Row(
                   children: [
                     Icon(isBerlaku ? Icons.check_circle : Icons.cancel, color: statusColor, size: 20),
                     const SizedBox(width: 8),
-                    Text(
-                      "Status: ${produk.status}",
-                      style: GoogleFonts.lato(fontWeight: FontWeight.bold, color: statusColor),
-                    ),
+                    Text("Status: ${produk.status}", style: GoogleFonts.lato(fontWeight: FontWeight.bold, color: statusColor)),
                   ],
                 ),
               ],
@@ -155,10 +147,9 @@ class _DetailPageState extends State<DetailPage> {
 
           const SizedBox(height: 20),
 
-          // 2. DETAIL METADATA (GRID)
+          // 2. METADATA
           Text("Informasi Detail", style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF1a237e))),
           const SizedBox(height: 10),
-
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -168,96 +159,86 @@ class _DetailPageState extends State<DetailPage> {
             ),
             child: Column(
               children: [
-                _buildDetailRow("Nomor Peraturan", produk.nomorPeraturan, Icons.tag),
+                _buildDetailRow("Nomor", produk.nomorPeraturan, Icons.tag),
                 const Divider(height: 24),
                 _buildDetailRow("Tahun", produk.tahunTerbit, Icons.calendar_today),
                 const Divider(height: 24),
-                
-                // --- FIELD TAMBAHAN JDIHN ---
-                if (produk.tanggalPengundangan != null && produk.tanggalPengundangan != "null") ...[
-                   _buildDetailRow("Tgl Pengundangan", produk.tanggalPengundangan!, Icons.event_available),
-                   const Divider(height: 24),
-                ],
-                if (produk.teuBadan != null && produk.teuBadan != "null") ...[
+                if (produk.teuBadan != null) ...[
                    _buildDetailRow("TEU Badan", produk.teuBadan!, Icons.account_balance),
                    const Divider(height: 24),
                 ],
-                if (produk.penerbit != null && produk.penerbit != "null") ...[
-                   _buildDetailRow("Penerbit", produk.penerbit!, Icons.domain), // Menggunakan icon domain
-                   const Divider(height: 24),
-                ],
-                if (produk.sumber != null && produk.sumber != "null") ...[
+                if (produk.sumber != null) ...[
                    _buildDetailRow("Sumber", produk.sumber!, Icons.source),
                    const Divider(height: 24),
                 ],
-                if (produk.lokasi != null && produk.lokasi != "null") ...[
-                   _buildDetailRow("Lokasi Fisik", produk.lokasi!, Icons.location_on),
-                   const Divider(height: 24),
-                ],
-                // -----------------------------
-
                 _buildDetailRow("Bidang Hukum", produk.bidangHukum, Icons.gavel),
-                const Divider(height: 24),
-                _buildDetailRow("Bahasa", produk.bahasa ?? "Indonesia", Icons.language),
               ],
             ),
           ),
 
           const SizedBox(height: 25),
 
-          // 3. ABSTRAK (Jika Ada)
-          if (produk.abstrak != null && produk.abstrak!.isNotEmpty && produk.abstrak != "null") ...[
+          // 3. ABSTRAK
+          if (produk.abstrak != null && produk.abstrak!.isNotEmpty) ...[
             Text("Abstrak", style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF1a237e))),
             const SizedBox(height: 10),
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                produk.abstrak!,
-                style: GoogleFonts.lato(fontSize: 14, height: 1.5, color: Colors.grey[800]),
-                textAlign: TextAlign.justify,
-              ),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+              child: Text(produk.abstrak!, style: GoogleFonts.lato(fontSize: 14, height: 1.5, color: Colors.grey[800]), textAlign: TextAlign.justify),
             ),
             const SizedBox(height: 25),
           ],
 
-          // 4. FILE PDF VIEWER / DOWNLOAD
+          // 4. PDF VIEWER & DOWNLOAD
           if (produk.hasFile && produk.downloadUrl.isNotEmpty) ...[
              Text("Dokumen Lampiran", style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF1a237e))),
              const SizedBox(height: 10),
              
-             // PDF Previewer
+             // PDF PREVIEW
              SizedBox(
-               height: 400,
+               height: 500, // Sedikit ditinggikan agar area baca lebih luas
                child: ClipRRect(
                  borderRadius: BorderRadius.circular(16),
                  child: const PDF(
                    enableSwipe: true,
-                   swipeHorizontal: false,
-                   autoSpacing: false,
-                   pageFling: false,
+                   swipeHorizontal: false, // <--- PENTING: Ubah ke false agar scroll Vertikal (Atas-Bawah)
+                   autoSpacing: true,      // <--- Agar ada jarak wajar antar halaman
+                   pageFling: true,        // <--- Agar scroll terasa "meluncur" mulus (kinetik)
+                   pageSnap: false,        // <--- Matikan snap agar tidak memaksa berhenti per halaman
+                   fitEachPage: false,     // <--- Agar lebar halaman menyesuaikan layar (Zoom Fit)
                  ).cachedFromUrl(
                    produk.downloadUrl,
-                   placeholder: (progress) => Center(child: Text('$progress %', style: GoogleFonts.lato())),
-                   errorWidget: (error) => Center(child: Column(
-                     mainAxisAlignment: MainAxisAlignment.center,
-                     children: [
-                       const Icon(Icons.picture_as_pdf, color: Colors.grey, size: 40),
-                       const SizedBox(height: 10),
-                       Text("Preview PDF tidak tersedia\nSilakan download manual", textAlign: TextAlign.center, style: GoogleFonts.lato(color: Colors.grey)),
-                     ],
-                   )),
+                   placeholder: (progress) => Center(
+                     child: Column(
+                       mainAxisAlignment: MainAxisAlignment.center,
+                       children: [
+                         const CircularProgressIndicator(),
+                         const SizedBox(height: 10),
+                         Text('$progress %', style: GoogleFonts.lato()),
+                       ],
+                     ),
+                   ),
+                   errorWidget: (error) => Center(
+                     child: Column(
+                       mainAxisAlignment: MainAxisAlignment.center,
+                       children: [
+                         const Icon(Icons.error_outline, color: Colors.red, size: 40),
+                         const SizedBox(height: 10),
+                         Text(
+                           "Gagal memuat preview.\nSilakan download manual.", 
+                           textAlign: TextAlign.center, 
+                           style: GoogleFonts.lato(color: Colors.grey)
+                         ),
+                       ],
+                     ),
+                   ),
                  ),
                ),
              ),
-             
-             const SizedBox(height: 20),
 
-             // Tombol Download Manual
+             // TOMBOL DOWNLOAD
              SizedBox(
                width: double.infinity,
                height: 55,
@@ -280,7 +261,7 @@ class _DetailPageState extends State<DetailPage> {
                  children: [
                    Icon(Icons.warning_amber_rounded, color: Colors.orange.shade800),
                    const SizedBox(width: 10),
-                   Expanded(child: Text("Dokumen digital belum tersedia untuk peraturan ini.", style: GoogleFonts.lato(color: Colors.orange.shade900))),
+                   Expanded(child: Text("Dokumen digital belum tersedia.", style: GoogleFonts.lato(color: Colors.orange.shade900))),
                  ],
                ),
              ),
@@ -291,7 +272,6 @@ class _DetailPageState extends State<DetailPage> {
     );
   }
 
-  // Widget Helper untuk Baris Detail
   Widget _buildDetailRow(String label, String value, IconData icon) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
