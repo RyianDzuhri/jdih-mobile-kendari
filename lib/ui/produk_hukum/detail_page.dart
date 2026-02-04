@@ -18,10 +18,13 @@ class _DetailPageState extends State<DetailPage> {
   final JdihService _jdihService = JdihService();
   late Future<ProdukHukum> _detailFuture;
 
+  // VARIABEL UNTUK MENGATUR SCROLL
+  // Default: Halaman bisa di-scroll
+  ScrollPhysics _pageScrollPhysics = const AlwaysScrollableScrollPhysics();
+
   @override
   void initState() {
     super.initState();
-    // Panggil API detail saat init
     _detailFuture = _jdihService.getDetailProdukHukum(widget.produk.id);
   }
 
@@ -32,10 +35,6 @@ class _DetailPageState extends State<DetailPage> {
       );
       return;
     }
-    
-    // Debugging: Cek URL di console
-    print("Mencoba download dari: $url");
-
     final Uri uri = Uri.parse(url);
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (mounted) {
@@ -63,12 +62,9 @@ class _DetailPageState extends State<DetailPage> {
       body: FutureBuilder<ProdukHukum>(
         future: _detailFuture,
         builder: (context, snapshot) {
-          // Loading
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-
-          // Gunakan data API jika sukses, atau data fallback jika gagal
           final dataTampil = snapshot.hasData ? snapshot.data! : widget.produk;
           final isError = snapshot.hasError;
 
@@ -82,7 +78,9 @@ class _DetailPageState extends State<DetailPage> {
     final isBerlaku = produk.status.toLowerCase() == 'berlaku';
     final statusColor = isBerlaku ? Colors.green : Colors.red;
 
+    // 1. SingleChildScrollView DENGAN PHYSICS DINAMIS
     return SingleChildScrollView(
+      physics: _pageScrollPhysics, // <--- Ini kuncinya (Bisa dimatikan/hidupkan)
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -96,17 +94,12 @@ class _DetailPageState extends State<DetailPage> {
                 children: [
                   const Icon(Icons.info_outline, color: Colors.orange),
                   const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      "Gagal memuat detail lengkap. Menampilkan data arsip.",
-                      style: GoogleFonts.lato(fontSize: 12, color: Colors.orange[900]),
-                    ),
-                  ),
+                  Expanded(child: Text("Gagal memuat detail lengkap. Menampilkan data arsip.", style: GoogleFonts.lato(fontSize: 12, color: Colors.orange[900]))),
                 ],
               ),
             ),
 
-          // 1. HEADER
+          // HEADER KARTU
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -121,16 +114,10 @@ class _DetailPageState extends State<DetailPage> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(color: const Color(0xFFE8EAF6), borderRadius: BorderRadius.circular(8)),
-                  child: Text(
-                    produk.jenis.toUpperCase(),
-                    style: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFF1a237e)),
-                  ),
+                  child: Text(produk.jenis.toUpperCase(), style: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFF1a237e))),
                 ),
                 const SizedBox(height: 15),
-                Text(
-                  produk.judul,
-                  style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, height: 1.5, color: Colors.black87),
-                ),
+                Text(produk.judul, style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, height: 1.5, color: Colors.black87)),
                 const SizedBox(height: 20),
                 const Divider(),
                 const SizedBox(height: 10),
@@ -147,7 +134,7 @@ class _DetailPageState extends State<DetailPage> {
 
           const SizedBox(height: 20),
 
-          // 2. METADATA
+          // METADATA
           Text("Informasi Detail", style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF1a237e))),
           const SizedBox(height: 10),
           Container(
@@ -178,7 +165,7 @@ class _DetailPageState extends State<DetailPage> {
 
           const SizedBox(height: 25),
 
-          // 3. ABSTRAK
+          // ABSTRAK
           if (produk.abstrak != null && produk.abstrak!.isNotEmpty) ...[
             Text("Abstrak", style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF1a237e))),
             const SizedBox(height: 10),
@@ -191,52 +178,58 @@ class _DetailPageState extends State<DetailPage> {
             const SizedBox(height: 25),
           ],
 
-          // 4. PDF VIEWER & DOWNLOAD
+          // 2. PDF VIEWER DENGAN LISTENER (TRIK SCROLL)
           if (produk.hasFile && produk.downloadUrl.isNotEmpty) ...[
              Text("Dokumen Lampiran", style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF1a237e))),
              const SizedBox(height: 10),
              
-             // PDF PREVIEW
-             SizedBox(
-               height: 500, // Sedikit ditinggikan agar area baca lebih luas
-               child: ClipRRect(
-                 borderRadius: BorderRadius.circular(16),
-                 child: const PDF(
-                   enableSwipe: true,
-                   swipeHorizontal: false, // <--- PENTING: Ubah ke false agar scroll Vertikal (Atas-Bawah)
-                   autoSpacing: true,      // <--- Agar ada jarak wajar antar halaman
-                   pageFling: true,        // <--- Agar scroll terasa "meluncur" mulus (kinetik)
-                   pageSnap: false,        // <--- Matikan snap agar tidak memaksa berhenti per halaman
-                   fitEachPage: false,     // <--- Agar lebar halaman menyesuaikan layar (Zoom Fit)
-                 ).cachedFromUrl(
-                   produk.downloadUrl,
-                   placeholder: (progress) => Center(
-                     child: Column(
+             // Bungkus PDF dengan Listener untuk mendeteksi sentuhan jari
+             Listener(
+               onPointerDown: (_) {
+                 // Saat jari menyentuh PDF, matikan scroll halaman utama
+                 setState(() {
+                   _pageScrollPhysics = const NeverScrollableScrollPhysics();
+                 });
+               },
+               onPointerUp: (_) {
+                 // Saat jari diangkat, hidupkan kembali scroll halaman utama
+                 setState(() {
+                   _pageScrollPhysics = const AlwaysScrollableScrollPhysics();
+                 });
+               },
+               onPointerCancel: (_) {
+                 setState(() {
+                   _pageScrollPhysics = const AlwaysScrollableScrollPhysics();
+                 });
+               },
+               child: SizedBox(
+                 height: 500,
+                 child: ClipRRect(
+                   borderRadius: BorderRadius.circular(16),
+                   child: const PDF(
+                     enableSwipe: true,
+                     swipeHorizontal: false, // Scroll Vertikal
+                     autoSpacing: true,
+                     pageFling: true,
+                     pageSnap: false,       // Matikan snap agar smooth
+                     fitEachPage: false,
+                   ).cachedFromUrl(
+                     produk.downloadUrl,
+                     placeholder: (progress) => Center(child: Text('$progress %', style: GoogleFonts.lato())),
+                     errorWidget: (error) => Center(child: Column(
                        mainAxisAlignment: MainAxisAlignment.center,
                        children: [
-                         const CircularProgressIndicator(),
+                         const Icon(Icons.picture_as_pdf, color: Colors.grey, size: 40),
                          const SizedBox(height: 10),
-                         Text('$progress %', style: GoogleFonts.lato()),
+                         Text("PDF tidak tersedia", style: GoogleFonts.lato(color: Colors.grey, fontSize: 12)),
                        ],
-                     ),
-                   ),
-                   errorWidget: (error) => Center(
-                     child: Column(
-                       mainAxisAlignment: MainAxisAlignment.center,
-                       children: [
-                         const Icon(Icons.error_outline, color: Colors.red, size: 40),
-                         const SizedBox(height: 10),
-                         Text(
-                           "Gagal memuat preview.\nSilakan download manual.", 
-                           textAlign: TextAlign.center, 
-                           style: GoogleFonts.lato(color: Colors.grey)
-                         ),
-                       ],
-                     ),
+                     )),
                    ),
                  ),
                ),
              ),
+             
+             const SizedBox(height: 20),
 
              // TOMBOL DOWNLOAD
              SizedBox(
