@@ -6,84 +6,95 @@ import '../models/tipe_dokumen_model.dart';
 
 class JdihService {
   
-  // HEADERS DENGAN API KEY
+  // HEADERS (PASTIKAN KEY INI BENAR)
   final Map<String, String> _headers = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', 
-    'X-API-Key': 'jdih_mobile_key_rahasia', // Pastikan key ini sesuai dengan backend
+    'X-API-Key': 'jdih_mobile_key_rahasia', 
   };
 
-  // 1. Ambil Tipe Dokumen
+  // ... (Fungsi getTipeDokumen & getAllProdukHukum TETAP SAMA seperti kode lama Anda) ...
+  // copy-paste saja bagian getTipeDokumen & getAllProdukHukum dari kode lama Anda
+
   Future<List<TipeDokumen>> getTipeDokumen() async {
     try {
       final response = await http.get(Uri.parse(ApiConfig.documentTypes), headers: _headers);
-      
       if (response.statusCode == 200) {
         final dynamic jsonResponse = json.decode(response.body);
         List<dynamic> data = [];
-
-        if (jsonResponse is List) {
-           data = jsonResponse;
-        } else if (jsonResponse is Map && jsonResponse.containsKey('data')) {
-           data = jsonResponse['data'] ?? [];
-        }
-        
+        if (jsonResponse is List) { data = jsonResponse; } 
+        else if (jsonResponse is Map && jsonResponse.containsKey('data')) { data = jsonResponse['data'] ?? []; }
         return data.map((e) => TipeDokumen.fromJson(e)).toList();
-      } else {
-        return [];
       }
-    } catch (e) {
-      print("Error koneksi tipe dokumen: $e");
       return [];
-    }
+    } catch (e) { return []; }
   }
 
-  // 2. Ambil Semua Produk Hukum (List Awal)
   Future<List<ProdukHukum>> getAllProdukHukum() async {
     try {
       final response = await http.get(Uri.parse(ApiConfig.allDocuments), headers: _headers);
-
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
         final List<dynamic> data = jsonResponse['data'] ?? [];
-        
-        // Filter id 0 untuk menghindari data error
         return data.map((e) => ProdukHukum.fromJson(e)).where((e) => e.id != 0).toList();
       } else {
         throw Exception("Gagal Akses Data: ${response.statusCode}");
       }
     } catch (e) {
-      print("Error koneksi produk hukum: $e");
       rethrow;
     }
   }
 
-  // 3. AMBIL DETAIL PRODUK HUKUM (FORMAT JDIHN BARU)
-  Future<ProdukHukum> getDetailProdukHukum(int id) async {
+  // --- FUNGSI BARU: DOUBLE API (JDIHN + INTERNAL) ---
+  Future<ProdukHukum> getDetailLengkap(int id) async {
     try {
-      // URL Khusus Format JDIHN
-      // http://jdih.kendarikota.go.id/api/jdih/jdihn-format/documents/795
-      final String url = 'http://jdih.kendarikota.go.id/api/jdih/jdihn-format/documents/$id';
-      
-      print("Mengambil Detail ID: $id dari $url");
+      final String urlApi1 = 'http://jdih.kendarikota.go.id/api/jdih/jdihn-format/documents/$id';
+      final String urlApi2 = 'http://jdih.kendarikota.go.id/api/jdih/documents/$id';
 
-      final response = await http.get(
-        Uri.parse(url),
-        // headers: _headers, // Uncomment jika API Detail juga butuh header
-      );
+      print("Mulai Request Double API untuk ID: $id");
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        
-        // Langsung parse karena response JSON-nya langsung object (bukan list/data wrapper)
-        // Sesuai contoh: { "idData": "795", ... }
-        return ProdukHukum.fromJson(jsonResponse);
-      } else {
-        throw Exception('Gagal memuat detail: ${response.statusCode}');
+      // Panggil Paralel (Future.wait)
+      final results = await Future.wait([
+        http.get(Uri.parse(urlApi1), headers: _headers), // API 1
+        http.get(Uri.parse(urlApi2), headers: _headers), // API 2
+      ]);
+
+      final res1 = results[0];
+      final res2 = results[1];
+
+      ProdukHukum? dataUtama; // Hasil dari API 1
+      ProdukHukum? dataTambahan; // Hasil dari API 2
+
+      // Proses API 1 (JDIHN)
+      if (res1.statusCode == 200) {
+        try {
+          dataUtama = ProdukHukum.fromJson(json.decode(res1.body));
+        } catch (e) { print("Error parse API 1: $e"); }
       }
+
+      // Proses API 2 (Internal - Penandatangan, dll)
+      if (res2.statusCode == 200) {
+        try {
+          dataTambahan = ProdukHukum.fromJson(json.decode(res2.body));
+        } catch (e) { print("Error parse API 2: $e"); }
+      }
+
+      // LOGIKA PENGGABUNGAN
+      if (dataUtama != null && dataTambahan != null) {
+        // Gabungkan: Data Utama diupdate dengan Data Tambahan
+        print("✅ Sukses Gabung Data");
+        return dataUtama.updateDenganDataBaru(dataTambahan);
+      } else if (dataUtama != null) {
+        return dataUtama;
+      } else if (dataTambahan != null) {
+        return dataTambahan;
+      } else {
+        throw Exception("Gagal mengambil data dari kedua API (Cek Koneksi/ID)");
+      }
+
     } catch (e) {
-      print("Error detail jdihn: $e");
+      print("Error Service Detail: $e");
       rethrow;
     }
   }
