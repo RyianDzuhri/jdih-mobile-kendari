@@ -22,6 +22,7 @@ dev_dependencies:
   
   # Linter untuk menjaga kerapihan kode
   flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
@@ -29,3 +30,9 @@ flutter:
   # Bagian assets (gambar) nanti kita isi di sini kalau sudah ada logo
   # assets:
   #   - assets/images/logo.png
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon/icon.png"
+  min_sdk_android: 21
