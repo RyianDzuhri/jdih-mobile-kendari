@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../core/api_config.dart';
 import '../models/produk_hukum_model.dart';
 import '../models/tipe_dokumen_model.dart';
+import '../models/statistic_model.dart';
 
 class JdihService {
   
@@ -96,6 +97,27 @@ class JdihService {
     } catch (e) {
       print("Error Service Detail: $e");
       rethrow;
+    }
+  }
+
+  Future<StatisticModel?> getStatistics() async {
+    try {
+      print("Mengambil Statistik...");
+      final response = await http.get(
+        Uri.parse(ApiConfig.statistics),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        return StatisticModel.fromJson(jsonResponse);
+      } else {
+        print("Gagal statistik: ${response.statusCode}");
+        return null;
+      }
+    } catch (e) {
+      print("Error koneksi statistik: $e");
+      return null;
     }
   }
 }

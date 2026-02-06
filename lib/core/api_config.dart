@@ -7,6 +7,7 @@ class ApiConfig {
   static const String documentTypes = "$baseUrl/api/jdih/document-types";
   static const String search = "$baseUrl/api/jdih/search";
   static const String detailDocument = "$baseUrl/api/jdih/documents"; // + /{id}
+  static const String statistics = "$baseUrl/api/jdih/statistics";
   
   // Timeout (opsional, buat jaga-jaga kalau server lambat)
   static const int receiveTimeout = 15000; // 15 detik
