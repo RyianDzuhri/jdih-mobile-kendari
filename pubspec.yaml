@@ -28,9 +28,9 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  # Bagian assets (gambar) nanti kita isi di sini kalau sudah ada logo
-  # assets:
-  #   - assets/images/logo.png
+  # Perhatikan spasi di bawah ini:
+  assets:
+    - assets/images/logo.png
 
 flutter_launcher_icons:
   android: "launcher_icon"
