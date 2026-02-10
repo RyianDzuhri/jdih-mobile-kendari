@@ -22,6 +22,10 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
   final JdihService _service = JdihService();
   
+  // WARNA TEMA BARU (Sesuai Website JDIH Kendari)
+  final Color _primaryDark = const Color(0xFF111827); // Biru Gelap (Header)
+  final Color _accentOrange = const Color(0xFFF97316); // Oranye (Search & Aksen)
+  
   // VARIABLE STATISTIK
   StatisticModel? _stats;
   bool _isLoading = true;
@@ -75,14 +79,10 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // FUNGSI POPUP FILTER CANGGIH
-  // FUNGSI POPUP FILTER (VERSI ANTI ERROR / RESPONSIF)
-  // FUNGSI POPUP FILTER (DENGAN TIPE DOKUMEN YANG BENAR)
+  // FUNGSI POPUP FILTER
   void _showFilterOptions() {
-    // 1. Daftar Tahun (2026 mundur sampai 2000)
     final List<String> years = ["Semua", ...List.generate(27, (index) => (2026 - index).toString())];
     
-    // 2. Daftar Jenis Dokumen (Sesuai Data JSON kamu)
     final List<String> types = [
       "Semua",
       "ANALISIS DAN EVALUASI",
@@ -103,7 +103,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true, // Agar bisa full screen/naik saat keyboard muncul
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
       builder: (context) {
         return StatefulBuilder(
@@ -113,19 +113,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 left: 25, 
                 right: 25, 
                 top: 25, 
-                // Padding bawah dinamis agar naik saat keyboard muncul
                 bottom: MediaQuery.of(context).viewInsets.bottom + 25 
               ),
-              child: SingleChildScrollView( // Bungkus ScrollView agar tidak overflow
+              child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // --- Header ---
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text("Filter Spesifik", style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF1a237e))),
+                        Text("Filter Spesifik", style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: _primaryDark)),
                         TextButton(
                           onPressed: () {
                             setModalState(() {
@@ -139,8 +137,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                     const SizedBox(height: 15),
-
-                    // --- 1. Input Nomor ---
                     Text("Nomor Dokumen", style: GoogleFonts.lato(fontWeight: FontWeight.bold, color: Colors.grey[700])),
                     const SizedBox(height: 8),
                     TextField(
@@ -151,16 +147,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         isDense: true, 
                         contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _accentOrange, width: 2)),
                       ),
                     ),
-                    
                     const SizedBox(height: 15),
-
-                    // --- 2. Input Tahun & Jenis ---
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start, 
                       children: [
-                        // BAGIAN TAHUN
                         Expanded(
                           flex: 4, 
                           child: Column(
@@ -175,6 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   isDense: true, 
                                   contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _accentOrange, width: 2)),
                                 ),
                                 items: years.map((y) => DropdownMenuItem(value: y, child: Text(y, style: const TextStyle(fontSize: 13)))).toList(),
                                 onChanged: (val) => setModalState(() => _selectedTahun = val!),
@@ -183,8 +177,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         const SizedBox(width: 15),
-                        
-                        // BAGIAN JENIS (Updated List)
                         Expanded(
                           flex: 6,
                           child: Column(
@@ -199,12 +191,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                   isDense: true, 
                                   contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _accentOrange, width: 2)),
                                 ),
-                                // Menggunakan list types yang baru
-                                items: types.map((t) => DropdownMenuItem(
-                                  value: t, 
-                                  child: Text(t, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))
-                                )).toList(),
+                                items: types.map((t) => DropdownMenuItem(value: t, child: Text(t, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13)))).toList(),
                                 onChanged: (val) => setModalState(() => _selectedJenis = val!),
                               ),
                             ],
@@ -212,16 +201,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 25),
-
-                    // --- Tombol Terapkan ---
                     SizedBox(
                       width: double.infinity,
                       height: 48,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1a237e),
+                          backgroundColor: _primaryDark,
+                          foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                         ),
                         onPressed: () {
@@ -234,13 +221,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                 searchQuery: _searchController.text,
                                 filterNomor: _nomorController.text,
                                 filterTahun: _selectedTahun,
-                                filterJenis: _selectedJenis, // Mengirim jenis yang dipilih
+                                filterJenis: _selectedJenis,
                                 categoryFilter: "ALL",
                               ),
                             ),
                           );
                         },
-                        child: Text("Terapkan Filter", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold)),
+                        child: Text("Terapkan Filter", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],
@@ -256,7 +243,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA), 
+      backgroundColor: const Color(0xFFF3F4F6), 
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -266,14 +253,14 @@ class _HomeScreenState extends State<HomeScreen> {
             
             const SizedBox(height: 25),
 
-            // 2. MENU UTAMA (POSISI DI ATAS)
+            // 2. MENU UTAMA
             _buildSectionTitle("Menu Utama"),
             const SizedBox(height: 10),
             _buildMainButton(context),
 
             const SizedBox(height: 30),
 
-            // 3. DASHBOARD STATISTIK (POSISI DI BAWAH)
+            // 3. DASHBOARD STATISTIK
             _buildSectionTitle("Dashboard Data"),
             const SizedBox(height: 10),
             _buildStatistikSection(),
@@ -303,7 +290,7 @@ class _HomeScreenState extends State<HomeScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
-              boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.08), blurRadius: 15, offset: const Offset(0, 5))],
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -314,7 +301,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Text("Total Dokumen", style: GoogleFonts.lato(color: Colors.grey[600], fontSize: 12)),
                     Text(
                       "${_stats!.totalDokumen}", 
-                      style: GoogleFonts.poppins(fontSize: 32, fontWeight: FontWeight.bold, color: const Color(0xFF1a237e))
+                      style: GoogleFonts.poppins(fontSize: 32, fontWeight: FontWeight.bold, color: _primaryDark)
                     ),
                     Text(
                       "Update: ${_stats!.lastUpdated}",
@@ -324,91 +311,119 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(12)),
-                  child: const Icon(Icons.bar_chart_rounded, color: Color(0xFF1a237e), size: 28),
+                  decoration: BoxDecoration(color: _primaryDark.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                  child: Icon(Icons.bar_chart_rounded, color: _primaryDark, size: 28),
                 ),
               ],
             ),
           ),
         ),
-        
         const SizedBox(height: 20),
-        
-        // B. Slider Kategori
         StatistikTipeSlider(dataTipe: _stats!.perTipe),
-        
         const SizedBox(height: 20),
-        
-        // C. Chart Tahunan
         StatistikChartTahun(dataTahun: _stats!.perTahun),
-        
         const SizedBox(height: 20),
-        
-        // D. Chart Status
         StatistikChartStatus(dataStatus: _stats!.perStatus),
       ],
     );
   }
 
-  // --- HEADER SEARCH ---
-  // --- HEADER SEARCH (TANPA NOTIFIKASI) ---
+  // --- HEADER SEARCH (REVISI: WARNA BARU + 2 LOGO) ---
   Widget _buildHeaderSearch(BuildContext context) {
     return Stack(
       children: [
+        // BACKGROUND HEADER (BIRU GELAP WEB)
         Container(
-          height: 220,
-          decoration: const BoxDecoration(
-            color: Color(0xFF1a237e),
-            borderRadius: BorderRadius.only(bottomLeft: Radius.circular(35), bottomRight: Radius.circular(35)),
+          height: 230,
+          decoration: BoxDecoration(
+            color: _primaryDark, 
+            image: const DecorationImage(
+              image: AssetImage('assets/images/logo.png'), 
+              opacity: 0.05, 
+              fit: BoxFit.cover, 
+            ),
+            borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(35), bottomRight: Radius.circular(35)),
           ),
           child: Stack(
             children: [
-              Positioned(top: -50, right: -50, child: Container(width: 200, height: 200, decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), shape: BoxShape.circle))),
-              Positioned(bottom: 20, left: -30, child: Container(width: 150, height: 150, decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), shape: BoxShape.circle))),
+              Positioned(top: -50, right: -50, child: Container(width: 200, height: 200, decoration: BoxDecoration(color: Colors.white.withOpacity(0.03), shape: BoxShape.circle))),
+              Positioned(bottom: 20, left: -30, child: Container(width: 150, height: 150, decoration: BoxDecoration(color: Colors.white.withOpacity(0.03), shape: BoxShape.circle))),
+              
               Padding(
-                 padding: const EdgeInsets.fromLTRB(25, 70, 25, 20),
+                 padding: const EdgeInsets.fromLTRB(25, 60, 25, 20),
                  child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
+                        // LOGO 1: JDIH (logo.png)
+                        Container(
+                          padding: const EdgeInsets.all(6), // Padding diperkecil sedikit biar muat
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10)
+                          ),
+                          child: Image.asset(
+                            'assets/images/logo.png', 
+                            height: 30, 
+                            width: 30,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, color: Colors.white60, size: 20),
+                          ),
+                        ),
+                        
+                        const SizedBox(width: 8), // Jarak antar logo
+
+                        // LOGO 2: LOGO KENDARI (logo_kendari.png)
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10)
+                          ),
+                          child: Image.asset(
+                            'assets/images/logo_kendari.png', // Pastikan file ini ada di folder assets/images/
+                            height: 30, 
+                            width: 30,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) => const Icon(Icons.image_not_supported, color: Colors.white60, size: 20),
+                          ),
+                        ),
+
+                        const SizedBox(width: 12),
+                        
+                        // JUDUL (Teks Putih)
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  // LOGO
-                                  Image.asset(
-                                    'assets/images/logo.png', 
-                                    height: 32, 
-                                    width: 32,
-                                    fit: BoxFit.contain,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return const Icon(Icons.broken_image, color: Colors.white60, size: 30);
-                                    },
-                                  ),
-                                  const SizedBox(width: 12),
-                                  // JUDUL
-                                  Expanded(
-                                    child: Text(
-                                      "JDIH Kota Kendari",
-                                      style: GoogleFonts.poppins(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
-                                      maxLines: 2, 
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
+                              Text(
+                                "JDIH Kota Kendari",
+                                style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 5),
-                              Text("Selamat datang di portal hukum daerah", style: GoogleFonts.lato(color: Colors.white.withOpacity(0.8), fontSize: 13)),
+                              Text("Jaringan Dokumentasi Hukum", style: GoogleFonts.lato(color: Colors.white70, fontSize: 11)),
                             ],
                           ),
                         ),
-                        // BAGIAN ICON NOTIFIKASI SUDAH DIHAPUS DARI SINI
                       ],
+                    ),
+                    const SizedBox(height: 25),
+                    
+                    // TAGLINE ADAT
+                    Text(
+                      "Inae konasara ie'e pinesara inae lia", 
+                      style: GoogleFonts.playfairDisplay(
+                        color: _accentOrange, 
+                        fontSize: 14, 
+                        fontStyle: FontStyle.italic,
+                        fontWeight: FontWeight.bold
+                      )
+                    ),
+                    Text(
+                      "Siapa yang menghargai adat ia akan dihormati", 
+                      style: GoogleFonts.lato(color: Colors.white.withOpacity(0.8), fontSize: 12),
                     ),
                   ],
                 ),
@@ -416,47 +431,49 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
+        
+        // SEARCH BAR
         Container(
-          margin: const EdgeInsets.only(top: 185, left: 25, right: 25),
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          margin: const EdgeInsets.only(top: 195, left: 25, right: 25),
+          padding: const EdgeInsets.symmetric(horizontal: 5),
           height: 60,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [BoxShadow(color: const Color(0xFF1a237e).withOpacity(0.15), blurRadius: 15, offset: const Offset(0, 8))],
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 5))],
           ),
           child: Row(
             children: [
-              InkWell(
-                onTap: _performSearch,
-                child: const Icon(Icons.search_rounded, color: Colors.grey, size: 26)
-              ),
               const SizedBox(width: 15),
+              Icon(Icons.search_rounded, color: Colors.grey[400], size: 24),
+              const SizedBox(width: 10),
               Expanded(
                 child: TextField(
                   controller: _searchController, 
                   onSubmitted: (_) => _performSearch(),
                   textInputAction: TextInputAction.search,
                   decoration: InputDecoration(
-                    hintText: "Cari peraturan, keputusan...",
+                    hintText: "Cari peraturan...",
                     hintStyle: GoogleFonts.lato(color: Colors.grey[400]),
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 15)
+                    contentPadding: const EdgeInsets.symmetric(vertical: 14)
                   ),
                 ),
               ),
-              // TOMBOL FILTER (TUNE)
+              // TOMBOL FILTER (ORANYE)
               Material(
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: _showFilterOptions, 
                   borderRadius: BorderRadius.circular(10),
                   child: Container(
-                    padding: const EdgeInsets.all(12), 
+                    margin: const EdgeInsets.all(5),
+                    padding: const EdgeInsets.all(10), 
                     decoration: BoxDecoration(
-                      border: Border(left: BorderSide(color: Colors.grey.shade200)),
+                      color: _accentOrange.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.tune_rounded, color: Color(0xFF1a237e)),
+                    child: Icon(Icons.tune_rounded, color: _accentOrange, size: 22),
                   ),
                 ),
               ),
@@ -473,9 +490,9 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 25),
       child: Row(
         children: [
-          Container(height: 20, width: 4, decoration: BoxDecoration(color: const Color(0xFF1a237e), borderRadius: BorderRadius.circular(2))),
+          Container(height: 20, width: 4, decoration: BoxDecoration(color: _accentOrange, borderRadius: BorderRadius.circular(2))),
           const SizedBox(width: 10),
-          Text(title, style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF1a237e))),
+          Text(title, style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: _primaryDark)),
         ],
       ),
     );
@@ -486,14 +503,19 @@ class _HomeScreenState extends State<HomeScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 25),
       height: 110, 
       decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [Color(0xFF1565C0), Color(0xFF42A5F5)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-        borderRadius: BorderRadius.circular(25),
-        boxShadow: [BoxShadow(color: const Color(0xFF1565C0).withOpacity(0.5), blurRadius: 15, offset: const Offset(0, 8))],
+        // GRADASI UNGU GELAP (Mirip WEB)
+        gradient: LinearGradient(
+          colors: [_primaryDark, const Color(0xFF312E81)], 
+          begin: Alignment.topLeft, 
+          end: Alignment.bottomRight
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: _primaryDark.withOpacity(0.4), blurRadius: 15, offset: const Offset(0, 8))],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(25),
+          borderRadius: BorderRadius.circular(20),
           onTap: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const DocumentListScreen(categoryFilter: "ALL", pageTitle: "Produk Hukum Daerah")));
           },
@@ -501,15 +523,26 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: const EdgeInsets.all(22.0),
             child: Row(
               children: [
-                Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle), child: const Icon(Icons.gavel_rounded, color: Colors.white, size: 36)),
+                Container(
+                  padding: const EdgeInsets.all(12), 
+                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), shape: BoxShape.circle), 
+                  child: const Icon(Icons.gavel_rounded, color: Colors.white, size: 32)
+                ),
                 const SizedBox(width: 20),
-                Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Text("Produk Hukum", style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start, 
+                  mainAxisAlignment: MainAxisAlignment.center, 
+                  children: [
+                    Text("Jelajahi Produk Hukum", style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
                     const SizedBox(height: 4),
-                    Text("Cari Perda, Perwali, SK, dll", style: GoogleFonts.lato(fontSize: 13, color: Colors.white.withOpacity(0.95))),
+                    Text("Cari Perda, Perwali, SK, dll", style: GoogleFonts.lato(fontSize: 12, color: Colors.white70)),
                   ]),
                 const Spacer(),
-                Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), shape: BoxShape.circle), child: const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 20)),
+                Container(
+                  padding: const EdgeInsets.all(8), 
+                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle), 
+                  child: Icon(Icons.arrow_forward_rounded, color: _primaryDark, size: 18)
+                ),
               ],
             ),
           ),

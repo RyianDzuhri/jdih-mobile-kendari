@@ -9,6 +9,10 @@ class StatistikTipeSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Definisi Warna Tema
+    const Color primaryDark = Color(0xFF111827);
+    const Color accentOrange = Color(0xFFF97316);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -16,14 +20,13 @@ class StatistikTipeSlider extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 25),
           child: Text(
             "Kategori Dokumen",
-            style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF1a237e)),
+            style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: primaryDark),
           ),
         ),
         const SizedBox(height: 15),
 
-        // --- BAGIAN YANG DIUBAH ---
         SizedBox(
-          height: 140, // <--- UBAH JADI 140 (Sebelumnya 110)
+          height: 140, 
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -32,13 +35,13 @@ class StatistikTipeSlider extends StatelessWidget {
               final item = dataTipe[index];
               return Container(
                 width: 140, 
-                margin: const EdgeInsets.only(right: 12, bottom: 10), // Tambah bottom margin dikit buat bayangan
-                padding: const EdgeInsets.all(15),
+                margin: const EdgeInsets.only(right: 12, bottom: 10), // Margin bawah untuk shadow
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
-                    BoxShadow(color: Colors.grey.withOpacity(0.08), blurRadius: 10, offset: const Offset(0, 4))
+                    BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))
                   ],
                   border: Border.all(color: Colors.grey.shade100),
                 ),
@@ -46,25 +49,31 @@ class StatistikTipeSlider extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    // Icon Box
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE8EAF6),
-                        borderRadius: BorderRadius.circular(8),
+                        color: accentOrange.withOpacity(0.1), // Background Oranye Muda
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.folder_open_rounded, size: 20, color: Color(0xFF1a237e)),
+                      child: const Icon(Icons.folder_open_rounded, size: 22, color: accentOrange), // Icon Oranye
                     ),
+                    
                     const Spacer(),
+                    
+                    // Angka Total
                     Text(
                       "${item.total}",
-                      style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold, color: const Color(0xFF1a237e)),
+                      style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: primaryDark),
                     ),
-                    const SizedBox(height: 4), // Jarak sedikit dilonggarkan
+                    const SizedBox(height: 2), 
+                    
+                    // Label Kategori
                     Text(
                       item.label, 
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.lato(fontSize: 11, color: Colors.grey[600], fontWeight: FontWeight.bold),
+                      style: GoogleFonts.lato(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),

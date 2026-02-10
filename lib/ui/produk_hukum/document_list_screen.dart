@@ -33,6 +33,10 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
   final JdihService _service = JdihService();
   final TextEditingController _searchController = TextEditingController();
   
+  // WARNA TEMA (Sesuai Home)
+  final Color _primaryDark = const Color(0xFF111827); 
+  final Color _accentOrange = const Color(0xFFF97316); 
+
   List<ProdukHukum> _allDocs = [];      
   List<ProdukHukum> _filteredDocs = []; 
   List<TipeDokumen> _categories = [];   
@@ -149,36 +153,45 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: const Color(0xFFF3F4F6), // Background abu-abu sangat muda (mirip web)
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF1a237e)),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: _primaryDark),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(widget.pageTitle, style: GoogleFonts.poppins(color: const Color(0xFF1a237e), fontWeight: FontWeight.bold, fontSize: 16)),
+        title: Text(
+          widget.pageTitle, 
+          style: GoogleFonts.poppins(color: _primaryDark, fontWeight: FontWeight.bold, fontSize: 16)
+        ),
         centerTitle: true,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1.0),
+          child: Container(color: Colors.grey[200], height: 1.0),
+        ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator(color: _primaryDark))
           : _errorMessage.isNotEmpty
               ? Center(child: Text(_errorMessage))
               : Column(
                   children: [
-                    // Search Bar
+                    // SEARCH BAR (Putih Bersih)
                     Container(
-                      padding: const EdgeInsets.fromLTRB(16, 10, 16, 5),
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                       color: Colors.white,
                       child: TextField(
                         controller: _searchController,
                         onChanged: (_) => _runCombinedFilter(),
                         decoration: InputDecoration(
-                          hintText: "Cari judul...",
-                          prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                          hintText: "Cari judul dokumen...",
+                          hintStyle: GoogleFonts.lato(color: Colors.grey[400]),
+                          prefixIcon: Icon(Icons.search, color: _primaryDark), // Ikon Biru Gelap
                           filled: true,
-                          fillColor: const Color(0xFFF0F2F5),
+                          fillColor: const Color(0xFFF9FAFB), // Abu-abu sangat tipis
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _accentOrange.withOpacity(0.5), width: 1)),
                           contentPadding: const EdgeInsets.symmetric(vertical: 0),
                         ),
                       ),
@@ -196,18 +209,26 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
                           itemCount: _categories.length,
                           itemBuilder: (context, index) {
                             final cat = _categories[index];
+                            final isSelected = _selectedChipId == cat.id;
                             return Padding(
                               padding: const EdgeInsets.only(right: 8),
                               child: FilterChip(
                                 label: Text(cat.nama),
-                                selected: _selectedChipId == cat.id,
+                                selected: isSelected,
                                 onSelected: (_) { setState(() => _selectedChipId = cat.id); _runCombinedFilter(); },
                                 backgroundColor: Colors.white,
-                                selectedColor: const Color(0xFF1a237e).withOpacity(0.1),
-                                labelStyle: TextStyle(color: _selectedChipId == cat.id ? const Color(0xFF1a237e) : Colors.black87),
+                                // Warna Terpilih: Oranye Tipis
+                                selectedColor: _accentOrange.withOpacity(0.1),
+                                checkmarkColor: _accentOrange,
+                                labelStyle: TextStyle(
+                                  color: isSelected ? _accentOrange : Colors.grey[700],
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(20),
-                                  side: BorderSide(color: _selectedChipId == cat.id ? Colors.transparent : Colors.grey.shade300)
+                                  side: BorderSide(
+                                    color: isSelected ? _accentOrange : Colors.grey.shade300
+                                  )
                                 ),
                               ),
                             );
@@ -215,16 +236,22 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
                         ),
                       )
                     else 
-                      // 2. TAMPILKAN INFO FILTER AKTIF (MODIFIKASI BARU)
+                      // 2. TAMPILKAN INFO FILTER AKTIF (TAGS)
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        color: Colors.white,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border(top: BorderSide(color: Colors.grey.shade100))
+                        ),
                         child: SingleChildScrollView(
                            scrollDirection: Axis.horizontal,
                            child: Row(
+                             crossAxisAlignment: CrossAxisAlignment.center,
                              children: [
-                               Text("Filter Aktif:", style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey[600])),
+                               Icon(Icons.filter_list_rounded, size: 16, color: _primaryDark),
+                               const SizedBox(width: 8),
+                               Text("Filter Aktif:", style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.bold, color: _primaryDark)),
                                const SizedBox(width: 10),
                                
                                // Chip Nomor
@@ -250,9 +277,9 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.search_off_rounded, size: 60, color: Colors.grey[300]),
-                                  const SizedBox(height: 10),
-                                  Text("Tidak ada dokumen ditemukan", style: GoogleFonts.lato(color: Colors.grey[500])),
+                                  Icon(Icons.folder_off_outlined, size: 60, color: Colors.grey[300]),
+                                  const SizedBox(height: 15),
+                                  Text("Tidak ada dokumen ditemukan", style: GoogleFonts.lato(color: Colors.grey[600], fontSize: 16)),
                                 ],
                               ),
                             ) 
@@ -267,25 +294,31 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
     );
   }
 
-  // WIDGET KECIL UNTUK LABEL FILTER
+  // WIDGET KECIL UNTUK LABEL FILTER (ORANYE STYLE)
   Widget _buildActiveFilterTag(String label) {
     return Container(
       margin: const EdgeInsets.only(right: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.blue.shade50,
+        color: _accentOrange.withOpacity(0.1), // Oranye muda
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.blue.shade200),
+        border: Border.all(color: _accentOrange.withOpacity(0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.check_circle, size: 14, color: Colors.blue.shade700),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: GoogleFonts.lato(color: Colors.blue.shade900, fontSize: 12, fontWeight: FontWeight.bold),
+          // Batasi panjang teks label agar tidak terlalu lebar
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 150),
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.lato(color: _accentOrange, fontSize: 11, fontWeight: FontWeight.bold),
+            ),
           ),
+          const SizedBox(width: 6),
+          Icon(Icons.close, size: 12, color: _accentOrange), // Ikon Close kecil (hiasan)
         ],
       ),
     );
