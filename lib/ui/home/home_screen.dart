@@ -403,7 +403,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              Text("Jaringan Dokumentasi Hukum", style: GoogleFonts.lato(color: Colors.white70, fontSize: 11)),
+                              Text("Jaringan Dokumentasi Dan Informasi Hukum Kota Kendari", style: GoogleFonts.lato(color: Colors.white70, fontSize: 11)),
                             ],
                           ),
                         ),
