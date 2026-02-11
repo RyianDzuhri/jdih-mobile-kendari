@@ -18,7 +18,6 @@ class _DetailPageState extends State<DetailPage> {
   final JdihService _jdihService = JdihService();
   late Future<ProdukHukum> _detailFuture;
   
-  // Variabel untuk mengontrol Scroll Halaman Utama
   ScrollPhysics _pageScrollPhysics = const AlwaysScrollableScrollPhysics();
 
   // WARNA TEMA
@@ -31,9 +30,9 @@ class _DetailPageState extends State<DetailPage> {
     _detailFuture = _jdihService.getDetailLengkap(widget.produk.id);
   }
 
-  Future<void> _launchDownload(String? url) async {
-    if (url == null || url.isEmpty || url == 'null') {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Maaf, File PDF tidak ditemukan di server')));
+  Future<void> _launchDownload(String? url, String labelFile) async {
+    if (url == null || url.isEmpty || !url.startsWith('http')) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Maaf, Link File $labelFile tidak valid')));
       return;
     }
     
@@ -87,7 +86,7 @@ class _DetailPageState extends State<DetailPage> {
     final statusColor = isBerlaku ? Colors.green : Colors.red;
 
     return SingleChildScrollView(
-      physics: _pageScrollPhysics, // <--- Physics ini dikendalikan oleh Listener di bawah
+      physics: _pageScrollPhysics,
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -112,10 +111,40 @@ class _DetailPageState extends State<DetailPage> {
           _buildMetadataSection(produk),
           const SizedBox(height: 25),
 
-          if (produk.abstrak != null && produk.abstrak!.isNotEmpty)
-             _buildAbstrakSection(produk.abstrak!),
+          // --- BAGIAN ABSTRAK (MODIFIKASI) ---
+          // Kita hanya tampilkan tombol download jika URL Abstrak ada.
+          // Teks nama file 'htfi...pdf' TIDAK AKAN DITAMPILKAN LAGI.
+          if (produk.abstrakUrl != null && produk.abstrakUrl!.isNotEmpty) ...[
+             Row(
+               children: [
+                 Icon(Icons.library_books_rounded, color: _primaryDark),
+                 const SizedBox(width: 10),
+                 Text("Abstrak / Ringkasan", style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: _primaryDark)),
+               ],
+             ),
+             const SizedBox(height: 15),
 
-          // PDF VIEW & DOWNLOAD
+             // TOMBOL DOWNLOAD ABSTRAK
+             Container(
+               margin: const EdgeInsets.only(bottom: 25),
+               width: double.infinity,
+               height: 50,
+               child: OutlinedButton.icon(
+                 style: OutlinedButton.styleFrom(
+                   foregroundColor: _primaryDark,
+                   backgroundColor: Colors.white,
+                   side: BorderSide(color: _primaryDark),
+                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                   elevation: 0,
+                 ),
+                 onPressed: () => _launchDownload(produk.abstrakUrl, "Abstrak"), 
+                 icon: const Icon(Icons.description_outlined),
+                 label: Text("Download File Abstrak", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+               ),
+             ),
+          ],
+
+          // --- BAGIAN DOKUMEN LAMPIRAN UTAMA ---
           if (produk.hasFile && produk.downloadUrl.isNotEmpty) ...[
              Row(
                children: [
@@ -126,19 +155,10 @@ class _DetailPageState extends State<DetailPage> {
              ),
              const SizedBox(height: 15),
              
-             // --- PERBAIKAN: LISTENER UNTUK SCROLL PDF ---
              Listener(
-               onPointerDown: (_) {
-                 // Saat jari menyentuh PDF, matikan scroll halaman utama
-                 setState(() => _pageScrollPhysics = const NeverScrollableScrollPhysics());
-               },
-               onPointerUp: (_) {
-                 // Saat jari diangkat, hidupkan kembali scroll halaman utama
-                 setState(() => _pageScrollPhysics = const AlwaysScrollableScrollPhysics());
-               },
-               onPointerCancel: (_) {
-                 setState(() => _pageScrollPhysics = const AlwaysScrollableScrollPhysics());
-               },
+               onPointerDown: (_) => setState(() => _pageScrollPhysics = const NeverScrollableScrollPhysics()),
+               onPointerUp: (_) => setState(() => _pageScrollPhysics = const AlwaysScrollableScrollPhysics()),
+               onPointerCancel: (_) => setState(() => _pageScrollPhysics = const AlwaysScrollableScrollPhysics()),
                child: Container(
                  height: 500,
                  decoration: BoxDecoration(
@@ -150,7 +170,7 @@ class _DetailPageState extends State<DetailPage> {
                    borderRadius: BorderRadius.circular(15),
                    child: const PDF(
                      enableSwipe: true,
-                     swipeHorizontal: false, // Scroll vertikal
+                     swipeHorizontal: false, 
                      autoSpacing: true,
                      pageFling: true,
                      pageSnap: false,
@@ -170,11 +190,10 @@ class _DetailPageState extends State<DetailPage> {
                  ),
                ),
              ),
-             // -------------------------------------------
              
              const SizedBox(height: 20),
 
-             // TOMBOL DOWNLOAD
+             // TOMBOL DOWNLOAD UTAMA
              SizedBox(
                width: double.infinity,
                height: 55,
@@ -185,7 +204,7 @@ class _DetailPageState extends State<DetailPage> {
                    elevation: 4,
                    shadowColor: _primaryDark.withOpacity(0.4),
                  ),
-                 onPressed: () => _launchDownload(produk.downloadUrl),
+                 onPressed: () => _launchDownload(produk.downloadUrl, "PDF Lengkap"),
                  icon: const Icon(Icons.download_rounded, color: Colors.white),
                  label: Text("Download PDF Lengkap", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16)),
                ),
@@ -281,26 +300,6 @@ class _DetailPageState extends State<DetailPage> {
         _buildDetailRow("Bidang Hukum", produk.bidangHukum, Icons.gavel_rounded),
       ]),
     );
-  }
-
-  Widget _buildAbstrakSection(String abstrak) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(
-        children: [
-          Icon(Icons.library_books_rounded, color: _primaryDark),
-          const SizedBox(width: 10),
-          Text("Abstrak / Ringkasan", style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: _primaryDark)),
-        ],
-      ),
-      const SizedBox(height: 10),
-      Container(
-        width: double.infinity, 
-        padding: const EdgeInsets.all(24), 
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 5))]), 
-        child: Text(abstrak, style: GoogleFonts.lato(fontSize: 14, height: 1.6, color: Colors.grey[800]), textAlign: TextAlign.justify)
-      ),
-      const SizedBox(height: 25),
-    ]);
   }
 
   Widget _buildDetailRow(String label, String value, IconData icon) {

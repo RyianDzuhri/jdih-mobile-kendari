@@ -6,10 +6,15 @@ class ProdukHukum {
   final String jenis;
   final String status;
   final String bidangHukum;
-  final String downloadUrl; // INI KUNCINYA
+  
+  // URL FILE UTAMA (Dokumen Peraturan)
+  final String downloadUrl; 
   final bool hasFile;
 
-  // Field Tambahan
+  // URL FILE ABSTRAK (Jika ada)
+  final String? abstrakUrl;
+
+  // Metadata
   final String? tanggalPengundangan;
   final String? tempatTerbit;
   final String? penerbit;
@@ -18,7 +23,7 @@ class ProdukHukum {
   final String? bahasa;
   final String? teuBadan;
   final String? lokasi;
-  final String? abstrak;
+  final String? abstrak; // Isi teks ringkasan (atau nama file raw)
   final String? tanggalPenetapan;
   final String? penandatanganan;
   final int? dilihat;
@@ -34,6 +39,7 @@ class ProdukHukum {
     required this.bidangHukum,
     required this.downloadUrl,
     required this.hasFile,
+    this.abstrakUrl,
     this.tanggalPengundangan,
     this.tempatTerbit,
     this.penerbit,
@@ -50,37 +56,51 @@ class ProdukHukum {
   });
 
   factory ProdukHukum.fromJson(Map<String, dynamic> json) {
-    // 1. AMBIL URL MENTAH DARI MANAPUN IA BERADA
+    // ---------------------------------------------------------
+    // 1. LOGIKA URL DOKUMEN UTAMA
+    // ---------------------------------------------------------
     String rawUrl = '';
     
-    // Cek di key 'fileDownload' (biasanya nama file doang di API 1)
     if (json['fileDownload'] != null && json['fileDownload'].toString().contains('.pdf')) {
        rawUrl = json['fileDownload'].toString();
-    }
-    // Cek di key 'urlDownload'
-    else if (json['urlDownload'] != null) {
+    } else if (json['urlDownload'] != null) {
       rawUrl = json['urlDownload'].toString();
-    }
-    // Cek di key 'file_information' -> 'file_url' (API 2)
-    else if (json['file_information'] != null && json['file_information']['file_url'] != null) {
+    } else if (json['file_information'] != null && json['file_information']['file_url'] != null) {
       rawUrl = json['file_information']['file_url'].toString();
     }
 
-    // 2. LOGIKA REKONSTRUKSI URL (AMBIL NAMA FILE -> TEMPEL KE BASE URL)
     String finalUrl = '';
     if (rawUrl.isNotEmpty) {
-      // Ambil bagian terakhir setelah garis miring (nama file)
-      // Contoh: "http://.../storage/namafile.pdf" -> "namafile.pdf"
       String filename = rawUrl.split('/').last;
-
-      // Pastikan nama file mengandung .pdf (untuk keamanan)
       if (filename.toLowerCase().contains('.pdf')) {
-        // BANGUN ULANG URL SESUAI STRUKTUR YANG ANDA TEMUKAN
         finalUrl = 'https://jdih.kendarikota.go.id/storage/dokumen/$filename';
       } else {
-        // Jika tidak ada .pdf, mungkin URL belum lengkap, pakai apa adanya
         finalUrl = rawUrl;
       }
+    }
+
+    // ---------------------------------------------------------
+    // 2. LOGIKA URL FILE ABSTRAK (PERBAIKAN FOLDER)
+    // ---------------------------------------------------------
+    String? finalAbstrakUrl;
+    
+    // Ambil isi mentah dari field 'abstrak'
+    String contentAbstrak = json['abstrak']?.toString() ?? '';
+
+    // LOGIKA: Jika field 'abstrak' mengandung '.pdf', maka itu adalah FILE.
+    if (contentAbstrak.toLowerCase().contains('.pdf')) {
+       // Bersihkan nama file (jika ada path)
+       String filenameAbstrak = contentAbstrak.split('/').last;
+       
+       // PERBAIKAN: Folder diganti jadi /storage/dokumen/
+       finalAbstrakUrl = 'https://jdih.kendarikota.go.id/storage/dokumen/$filenameAbstrak';
+    } 
+    // Cek juga field 'fileAbstrak' untuk jaga-jaga
+    else if (json['fileAbstrak'] != null && json['fileAbstrak'].toString().contains('.pdf')) {
+       String fName = json['fileAbstrak'].toString().split('/').last;
+       
+       // PERBAIKAN: Folder diganti jadi /storage/dokumen/
+       finalAbstrakUrl = 'https://jdih.kendarikota.go.id/storage/dokumen/$fName';
     }
 
     return ProdukHukum(
@@ -92,11 +112,12 @@ class ProdukHukum {
       status: json['status']?.toString() ?? 'Berlaku',
       bidangHukum: json['bidangHukum']?.toString() ?? json['bidang_hukum']?.toString() ?? '-',
       
-      // URL HASIL OLAHAN
       downloadUrl: finalUrl,
       hasFile: finalUrl.isNotEmpty,
+      
+      // URL ABSTRAK YANG SUDAH JADI (FOLDER DOKUMEN)
+      abstrakUrl: finalAbstrakUrl, 
 
-      // Metadata
       tanggalPengundangan: json['tanggal_pengundangan']?.toString(),
       tempatTerbit: json['tempatTerbit']?.toString() ?? json['tempat_penetapan']?.toString(),
       penerbit: json['penerbit']?.toString(),
@@ -105,7 +126,10 @@ class ProdukHukum {
       bahasa: json['bahasa']?.toString(),
       teuBadan: json['teuBadan']?.toString(),
       lokasi: json['lokasi']?.toString(),
-      abstrak: json['abstrak']?.toString(),
+      
+      // Field 'abstrak' tetap diisi apa adanya untuk ditampilkan di UI 
+      abstrak: contentAbstrak, 
+      
       tanggalPenetapan: json['tanggal_penetapan']?.toString(),
       penandatanganan: json['penandatanganan']?.toString(),
       dilihat: json['statistik'] != null ? int.tryParse(json['statistik']['dilihat'].toString()) : 0,
@@ -113,7 +137,6 @@ class ProdukHukum {
     );
   }
 
-  // LOGIKA UPDATE DATA (MERGE)
   ProdukHukum updateDenganDataBaru(ProdukHukum dataBaru) {
     return ProdukHukum(
       id: id,
@@ -123,10 +146,11 @@ class ProdukHukum {
       jenis: jenis,
       status: status,
       bidangHukum: bidangHukum,
-      
-      // Prioritaskan URL yang valid (panjang)
       downloadUrl: (dataBaru.downloadUrl.length > 10) ? dataBaru.downloadUrl : downloadUrl,
       hasFile: dataBaru.hasFile || hasFile,
+      
+      // Update Abstrak Url
+      abstrakUrl: (dataBaru.abstrakUrl != null) ? dataBaru.abstrakUrl : abstrakUrl,
 
       tanggalPengundangan: tanggalPengundangan,
       tempatTerbit: tempatTerbit ?? dataBaru.tempatTerbit,
