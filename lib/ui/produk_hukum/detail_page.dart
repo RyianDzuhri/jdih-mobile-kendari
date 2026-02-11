@@ -85,6 +85,17 @@ class _DetailPageState extends State<DetailPage> {
     final isBerlaku = produk.status.toLowerCase().contains('berlaku');
     final statusColor = isBerlaku ? Colors.green : Colors.red;
 
+    // --- LOGIKA TAMPILAN ABSTRAK ---
+    bool showAbstrakText = false;
+    String rawAbstrak = produk.abstrak ?? "";
+
+    if (rawAbstrak.isNotEmpty) {
+      // Kalau TIDAK mengandung .pdf, berarti aman ditampilkan sebagai teks
+      if (!rawAbstrak.toLowerCase().contains('.pdf')) {
+        showAbstrakText = true;
+      }
+    }
+
     return SingleChildScrollView(
       physics: _pageScrollPhysics,
       padding: const EdgeInsets.all(20),
@@ -111,20 +122,24 @@ class _DetailPageState extends State<DetailPage> {
           _buildMetadataSection(produk),
           const SizedBox(height: 25),
 
-          // --- BAGIAN ABSTRAK (MODIFIKASI) ---
-          // Kita hanya tampilkan tombol download jika URL Abstrak ada.
-          // Teks nama file 'htfi...pdf' TIDAK AKAN DITAMPILKAN LAGI.
-          if (produk.abstrakUrl != null && produk.abstrakUrl!.isNotEmpty) ...[
-             Row(
-               children: [
-                 Icon(Icons.library_books_rounded, color: _primaryDark),
-                 const SizedBox(width: 10),
-                 Text("Abstrak / Ringkasan", style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: _primaryDark)),
-               ],
-             ),
-             const SizedBox(height: 15),
+          // --- BAGIAN ABSTRAK ---
+          if (showAbstrakText) ...[
+             _buildAbstrakSection(rawAbstrak),
+          ],
 
-             // TOMBOL DOWNLOAD ABSTRAK
+          if (produk.abstrakUrl != null) ...[
+             if (!showAbstrakText) 
+               Padding(
+                 padding: const EdgeInsets.only(bottom: 10),
+                 child: Row(
+                   children: [
+                     Icon(Icons.library_books_rounded, color: _primaryDark),
+                     const SizedBox(width: 10),
+                     Text("Abstrak Dokumen", style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: _primaryDark)),
+                   ],
+                 ),
+               ),
+
              Container(
                margin: const EdgeInsets.only(bottom: 25),
                width: double.infinity,
@@ -132,10 +147,8 @@ class _DetailPageState extends State<DetailPage> {
                child: OutlinedButton.icon(
                  style: OutlinedButton.styleFrom(
                    foregroundColor: _primaryDark,
-                   backgroundColor: Colors.white,
                    side: BorderSide(color: _primaryDark),
                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                   elevation: 0,
                  ),
                  onPressed: () => _launchDownload(produk.abstrakUrl, "Abstrak"), 
                  icon: const Icon(Icons.description_outlined),
@@ -144,7 +157,7 @@ class _DetailPageState extends State<DetailPage> {
              ),
           ],
 
-          // --- BAGIAN DOKUMEN LAMPIRAN UTAMA ---
+          // --- BAGIAN PDF DOKUMEN UTAMA ---
           if (produk.hasFile && produk.downloadUrl.isNotEmpty) ...[
              Row(
                children: [
@@ -193,7 +206,6 @@ class _DetailPageState extends State<DetailPage> {
              
              const SizedBox(height: 20),
 
-             // TOMBOL DOWNLOAD UTAMA
              SizedBox(
                width: double.infinity,
                height: 55,
@@ -294,12 +306,39 @@ class _DetailPageState extends State<DetailPage> {
         const Divider(height: 30),
         _buildDetailRow("Tahun Terbit", produk.tahunTerbit, Icons.calendar_today_rounded),
         const Divider(height: 30),
+        
+        // --- TAMBAHAN: TANGGAL PENGUNDANGAN ---
+        if (produk.tanggalPengundangan != null && produk.tanggalPengundangan != "0000-00-00") ...[
+          _buildDetailRow("Tgl Pengundangan", produk.tanggalPengundangan!, Icons.event_available_rounded),
+          const Divider(height: 30),
+        ],
+
         if (produk.tanggalPenetapan != null) ...[_buildDetailRow("Tgl Penetapan", produk.tanggalPenetapan!, Icons.edit_calendar_rounded), const Divider(height: 30)],
         if (produk.penandatanganan != null) ...[_buildDetailRow("Penandatangan", produk.penandatanganan!, Icons.draw_rounded), const Divider(height: 30)],
         if (produk.teuBadan != null) ...[_buildDetailRow("TEU Badan", produk.teuBadan!, Icons.account_balance_rounded), const Divider(height: 30)],
         _buildDetailRow("Bidang Hukum", produk.bidangHukum, Icons.gavel_rounded),
       ]),
     );
+  }
+
+  Widget _buildAbstrakSection(String abstrak) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(
+        children: [
+          Icon(Icons.library_books_rounded, color: _primaryDark),
+          const SizedBox(width: 10),
+          Text("Abstrak / Ringkasan", style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: _primaryDark)),
+        ],
+      ),
+      const SizedBox(height: 10),
+      Container(
+        width: double.infinity, 
+        padding: const EdgeInsets.all(24), 
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 5))]), 
+        child: Text(abstrak, style: GoogleFonts.lato(fontSize: 14, height: 1.6, color: Colors.grey[800]), textAlign: TextAlign.justify)
+      ),
+      const SizedBox(height: 25), 
+    ]);
   }
 
   Widget _buildDetailRow(String label, String value, IconData icon) {

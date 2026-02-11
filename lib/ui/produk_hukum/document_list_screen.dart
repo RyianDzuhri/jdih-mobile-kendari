@@ -9,7 +9,7 @@ class DocumentListScreen extends StatefulWidget {
   final String categoryFilter; 
   final String pageTitle;
   
-  // PARAMETER FILTER SPESIFIK
+  // Parameter awal dari Home
   final String? searchQuery;   
   final String? filterNomor;   
   final String? filterTahun;   
@@ -33,7 +33,7 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
   final JdihService _service = JdihService();
   final TextEditingController _searchController = TextEditingController();
   
-  // WARNA TEMA (Sesuai Home)
+  // WARNA TEMA
   final Color _primaryDark = const Color(0xFF111827); 
   final Color _accentOrange = const Color(0xFFF97316); 
 
@@ -45,20 +45,30 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
   String _errorMessage = '';
   int _selectedChipId = 0; 
 
-  // Cek apakah ini mode Filter Canggih (Advanced Search)?
-  bool get _isAdvancedFilterActive {
-    return (widget.filterNomor != null && widget.filterNomor!.isNotEmpty) ||
-           (widget.filterTahun != null && widget.filterTahun != "Semua") ||
-           (widget.filterJenis != null && widget.filterJenis != "Semua");
-  }
+  // --- VARIABEL LOKAL UNTUK FILTER (BISA DIHAPUS) ---
+  String? _activeNomor;
+  String? _activeTahun;
+  String? _activeJenis;
 
   @override
   void initState() {
     super.initState();
+    // 1. Salin data dari parameter widget ke variabel lokal saat pertama buka
     if (widget.searchQuery != null) {
       _searchController.text = widget.searchQuery!;
     }
+    _activeNomor = widget.filterNomor;
+    _activeTahun = widget.filterTahun;
+    _activeJenis = widget.filterJenis;
+
     _fetchAllData();
+  }
+
+  // Cek apakah ada filter "Lanjutan" yang sedang aktif?
+  bool get _isAdvancedFilterActive {
+    return (_activeNomor != null && _activeNomor!.isNotEmpty) ||
+           (_activeTahun != null && _activeTahun != "Semua") ||
+           (_activeJenis != null && _activeJenis != "Semua");
   }
 
   Future<void> _fetchAllData() async {
@@ -71,7 +81,6 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
       if (mounted) {
         setState(() {
           _allDocs = results[0] as List<ProdukHukum>;
-          // Tambah 'Semua' di awal
           _categories = [TipeDokumen(id: 0, nama: "Semua", singkatan: "ALL"), ...(results[1] as List<TipeDokumen>)];
           
           _runCombinedFilter(); 
@@ -87,7 +96,7 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
   void _runCombinedFilter() {
     List<ProdukHukum> tempDocs = _allDocs;
 
-    // 1. Filter Menu Utama (Kategori Besar)
+    // 1. Filter Kategori Besar (Menu Utama)
     if (widget.categoryFilter == "PRODUK_HUKUM") {
        tempDocs = tempDocs.where((doc) {
           final j = doc.jenis.toUpperCase();
@@ -97,7 +106,7 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
        tempDocs = tempDocs.where((doc) => doc.jenis.toUpperCase().contains(widget.categoryFilter.toUpperCase())).toList();
     }
 
-    // 2. Filter Chip (Hanya jalan kalau BUKAN Advanced Filter)
+    // 2. Filter Chip Kategori (Hanya jika TIDAK sedang pakai filter lanjutan)
     if (!_isAdvancedFilterActive && _selectedChipId != 0) {
       final selectedCat = _categories.firstWhere((c) => c.id == _selectedChipId);
       final filterName = selectedCat.nama.toUpperCase().trim();
@@ -121,20 +130,21 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
       }).toList();
     }
 
-    // 4. Filter Nomor
-    if (widget.filterNomor != null && widget.filterNomor!.isNotEmpty) {
-      tempDocs = tempDocs.where((doc) => doc.nomorPeraturan.trim() == widget.filterNomor!.trim()).toList();
+    // --- 4. FILTER LANJUTAN (GUNAKAN VARIABEL LOKAL) ---
+    
+    // Filter Nomor
+    if (_activeNomor != null && _activeNomor!.isNotEmpty) {
+      tempDocs = tempDocs.where((doc) => doc.nomorPeraturan.trim() == _activeNomor!.trim()).toList();
     }
 
-    // 5. Filter Tahun
-    if (widget.filterTahun != null && widget.filterTahun!.isNotEmpty && widget.filterTahun != "Semua") {
-       tempDocs = tempDocs.where((doc) => doc.tahunTerbit == widget.filterTahun).toList();
+    // Filter Tahun
+    if (_activeTahun != null && _activeTahun!.isNotEmpty && _activeTahun != "Semua") {
+       tempDocs = tempDocs.where((doc) => doc.tahunTerbit == _activeTahun).toList();
     }
 
-    // 6. Filter Jenis (Popup)
-    if (widget.filterJenis != null && widget.filterJenis!.isNotEmpty && widget.filterJenis != "Semua") {
-       final jenisPopup = widget.filterJenis!.toUpperCase();
-       
+    // Filter Jenis
+    if (_activeJenis != null && _activeJenis!.isNotEmpty && _activeJenis != "Semua") {
+       final jenisPopup = _activeJenis!.toUpperCase();
        if (jenisPopup == "PUTUSAN") {
           tempDocs = tempDocs.where((doc) {
              final j = doc.jenis.toUpperCase();
@@ -153,7 +163,7 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6), // Background abu-abu sangat muda (mirip web)
+      backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -177,7 +187,7 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
               ? Center(child: Text(_errorMessage))
               : Column(
                   children: [
-                    // SEARCH BAR (Putih Bersih)
+                    // Search Bar
                     Container(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                       color: Colors.white,
@@ -187,9 +197,9 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
                         decoration: InputDecoration(
                           hintText: "Cari judul dokumen...",
                           hintStyle: GoogleFonts.lato(color: Colors.grey[400]),
-                          prefixIcon: Icon(Icons.search, color: _primaryDark), // Ikon Biru Gelap
+                          prefixIcon: Icon(Icons.search, color: _primaryDark),
                           filled: true,
-                          fillColor: const Color(0xFFF9FAFB), // Abu-abu sangat tipis
+                          fillColor: const Color(0xFFF9FAFB),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _accentOrange.withOpacity(0.5), width: 1)),
                           contentPadding: const EdgeInsets.symmetric(vertical: 0),
@@ -199,7 +209,7 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
                     
                     // --- KONDISI TAMPILAN FILTER ---
                     if (!_isAdvancedFilterActive) 
-                      // 1. TAMPILKAN KATEGORI CHIPS (NORMAL)
+                      // MODE 1: CHIP KATEGORI BIASA
                       Container(
                         height: 50,
                         color: Colors.white,
@@ -217,7 +227,6 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
                                 selected: isSelected,
                                 onSelected: (_) { setState(() => _selectedChipId = cat.id); _runCombinedFilter(); },
                                 backgroundColor: Colors.white,
-                                // Warna Terpilih: Oranye Tipis
                                 selectedColor: _accentOrange.withOpacity(0.1),
                                 checkmarkColor: _accentOrange,
                                 labelStyle: TextStyle(
@@ -226,9 +235,7 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
                                 ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(20),
-                                  side: BorderSide(
-                                    color: isSelected ? _accentOrange : Colors.grey.shade300
-                                  )
+                                  side: BorderSide(color: isSelected ? _accentOrange : Colors.grey.shade300)
                                 ),
                               ),
                             );
@@ -236,7 +243,7 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
                         ),
                       )
                     else 
-                      // 2. TAMPILKAN INFO FILTER AKTIF (TAGS)
+                      // MODE 2: FILTER AKTIF (TAGS) - BISA DIHAPUS (X)
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -254,17 +261,35 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
                                Text("Filter Aktif:", style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.bold, color: _primaryDark)),
                                const SizedBox(width: 10),
                                
-                               // Chip Nomor
-                               if (widget.filterNomor != null && widget.filterNomor!.isNotEmpty)
-                                 _buildActiveFilterTag("Nomor: ${widget.filterNomor}"),
+                               // Tag Nomor (Bisa Dihapus)
+                               if (_activeNomor != null && _activeNomor!.isNotEmpty)
+                                 _buildActiveFilterTag(
+                                   "Nomor: $_activeNomor", 
+                                   () {
+                                     setState(() => _activeNomor = null); // Hapus filter
+                                     _runCombinedFilter(); // Refresh data
+                                   }
+                                 ),
 
-                               // Chip Tahun
-                               if (widget.filterTahun != null && widget.filterTahun != "Semua")
-                                 _buildActiveFilterTag("Tahun: ${widget.filterTahun}"),
+                               // Tag Tahun (Bisa Dihapus)
+                               if (_activeTahun != null && _activeTahun != "Semua")
+                                 _buildActiveFilterTag(
+                                   "Tahun: $_activeTahun",
+                                   () {
+                                     setState(() => _activeTahun = null); 
+                                     _runCombinedFilter();
+                                   }
+                                 ),
 
-                               // Chip Jenis
-                               if (widget.filterJenis != null && widget.filterJenis != "Semua")
-                                 _buildActiveFilterTag(widget.filterJenis!),
+                               // Tag Jenis (Bisa Dihapus)
+                               if (_activeJenis != null && _activeJenis != "Semua")
+                                 _buildActiveFilterTag(
+                                   _activeJenis!, 
+                                   () {
+                                     setState(() => _activeJenis = null); 
+                                     _runCombinedFilter();
+                                   }
+                                 ),
                              ],
                            ),
                         ),
@@ -294,32 +319,34 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
     );
   }
 
-  // WIDGET KECIL UNTUK LABEL FILTER (ORANYE STYLE)
-  Widget _buildActiveFilterTag(String label) {
-    return Container(
-      margin: const EdgeInsets.only(right: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: _accentOrange.withOpacity(0.1), // Oranye muda
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _accentOrange.withOpacity(0.3)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Batasi panjang teks label agar tidak terlalu lebar
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 150),
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.lato(color: _accentOrange, fontSize: 11, fontWeight: FontWeight.bold),
+  // WIDGET TOMBOL FILTER (Dengan Fungsi Hapus)
+  Widget _buildActiveFilterTag(String label, VoidCallback onRemove) {
+    return GestureDetector(
+      onTap: onRemove, // <-- Ini kuncinya, bisa diklik
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: _accentOrange.withOpacity(0.1), // Oranye muda
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: _accentOrange.withOpacity(0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 180),
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.lato(color: _accentOrange, fontSize: 11, fontWeight: FontWeight.bold),
+              ),
             ),
-          ),
-          const SizedBox(width: 6),
-          Icon(Icons.close, size: 12, color: _accentOrange), // Ikon Close kecil (hiasan)
-        ],
+            const SizedBox(width: 6),
+            Icon(Icons.close, size: 14, color: _accentOrange), // Ikon X
+          ],
+        ),
       ),
     );
   }
