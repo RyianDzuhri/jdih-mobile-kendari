@@ -6,13 +6,9 @@ class ProdukHukum {
   final String jenis;
   final String status;
   final String bidangHukum;
-  
-  // URL & File Info
   final String downloadUrl; 
   final bool hasFile;
   final String? abstrakUrl;
-
-  // Metadata
   final String? tanggalPengundangan;
   final String? tempatTerbit;
   final String? penerbit;

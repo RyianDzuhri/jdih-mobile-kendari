@@ -52,15 +52,15 @@ class ProdukCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF3F4F6), // Abu-abu sangat muda (Theme Web)
+                        color: const Color(0xFFF3F4F6),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         produk.jenis, 
                         style: GoogleFonts.lato(
                           fontSize: 11,
-                          fontWeight: FontWeight.w800, // Lebih tebal
-                          color: primaryDark, // Biru Gelap
+                          fontWeight: FontWeight.w800,
+                          color: primaryDark,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -115,7 +115,6 @@ class ProdukCard extends StatelessWidget {
                       ],
                     ),
 
-                    // Kanan: Tombol Lihat Detail (Oranye)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
