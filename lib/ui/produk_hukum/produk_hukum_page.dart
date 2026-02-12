@@ -72,7 +72,6 @@ class _ProdukHukumPageState extends State<ProdukHukumPage> {
         _filteredDocuments = _allDocuments;
       } else {
         // Filter berdasarkan kecocokan Nama Jenis
-        // (Pastikan nama di TipeDokumen SAMA dengan field 'jenis' di ProdukHukum)
         _filteredDocuments = _allDocuments
             .where((doc) => doc.jenis.toLowerCase().contains(typeName.toLowerCase()))
             .toList();
